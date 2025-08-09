@@ -1,0 +1,19 @@
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;margin:0;padding:24px;background:#0f1320;color:#eaeaea}
+.muted{color:#9aa}
+.header h1{margin:0 0 6px} .header p{margin:0 0 18px}
+.tile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.tile{display:flex;gap:12px;align-items:flex-start;background:#151a2c;border:1px solid #262c46;border-radius:16px;padding:12px;cursor:pointer;transition:transform .08s ease,border-color .1s ease}
+.tile:hover{transform:translateY(-2px);border-color:#3a7bd5}
+.tile img{width:64px;height:64px;object-fit:contain;border-radius:12px;background:#0b0e1a;padding:6px;flex:0 0 auto}
+.tile-body{display:flex;flex-direction:column;gap:6px;min-width:0}
+.label{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.url{font-size:12px;color:#9aa;word-break:break-all}
+.actions{display:flex;gap:8px;margin-top:4px}
+button{background:#1e2440;color:#eaeaea;border:1px solid #2e365f;border-radius:10px;padding:8px 12px}
+button:hover{background:#27305a}
+section{margin:16px 0}
+.editor form .row{display:flex;gap:10px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.editor input{padding:8px;border-radius:10px;border:1px solid #2e365f;background:#12172a;color:#eaeaea;min-width:280px}
+footer{margin-top:24px;border-top:1px solid #262c46;padding-top:12px}
+pre{background:#0b0e1a;border:1px solid #262c46;border-radius:12px;padding:12px;overflow:auto;max-height:220px}

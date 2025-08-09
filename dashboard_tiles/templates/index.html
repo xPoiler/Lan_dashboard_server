@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Tiles</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="header">
+    <h1>🧱 Dashboard LAN</h1>
+    <p class="muted">Collegamenti rapidi con icone automatiche • Porte in ascolto aggiornabili su richiesta</p>
+  </header>
+
+  <main>
+    <section>
+      <div id="tiles" class="tile-grid">
+        {% for tile in tiles %}
+        <div class="tile" onclick="window.open('{{ tile.url }}','_blank')">
+          <img src="{{ tile.icon }}" alt="icon" onerror="this.src='/static/icons/default.png'">
+          <div class="tile-body">
+            <div class="label">{{ tile.label }}</div>
+            <div class="url">{{ tile.url }}</div>
+            <div class="actions">
+              <button onclick="event.stopPropagation(); startEdit('{{ tile.label }}','{{ tile.url }}')">Modifica</button>
+              <button onclick="event.stopPropagation(); removeTile('{{ tile.url }}')">Elimina</button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="editor">
+      <h2>Aggiungi / Modifica</h2>
+      <form id="form" enctype="multipart/form-data">
+        <div class="row">
+          <label>Etichetta</label>
+          <input name="label" placeholder="Nome">
+        </div>
+        <div class="row">
+          <label>URL</label>
+          <input name="url" placeholder="http://192.168.x.x:port/">
+        </div>
+        <div class="row">
+          <label>Icona (URL)</label>
+          <input name="icon_url" placeholder="http(s)://.../favicon.png">
+        </div>
+        <div class="row">
+          <label>Oppure carica icona</label>
+          <input type="file" id="icon_file" accept="image/*">
+          <button type="button" onclick="uploadIcon()">Carica icona</button>
+          <span id="uploadStatus" class="muted"></span>
+        </div>
+        <div class="row">
+          <button type="button" onclick="submitForm()">Salva</button>
+          <button type="button" onclick="resetForm()">Reset</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-row">
+      <h3>Porte in ascolto</h3>
+      <div class="row">
+        <button onclick="refreshPorts()">Aggiorna porte</button>
+        <span id="portsMeta" class="muted"></span>
+      </div>
+      <pre id="ports">premi "Aggiorna porte"</pre>
+    </div>
+  </footer>
+
+<script>
+let editing=false, original_url=null;
+const form = document.getElementById('form');
+const iconFile = document.getElementById('icon_file');
+const uploadStatus = document.getElementById('uploadStatus');
+
+function startEdit(label, url){
+  editing = true; original_url = url;
+  form.label.value = label;
+  form.url.value = url;
+  form.icon_url.value='';
+  window.scrollTo({top: document.body.scrollHeight, behavior:'smooth'});
+}
+
+async function uploadIcon(){
+  if(!iconFile.files.length){ alert('Seleziona un file'); return; }
+  const fd = new FormData();
+  fd.append('file', iconFile.files[0]);
+  uploadStatus.textContent = '⏳ caricamento...';
+  try{
+    const r = await fetch('/upload_icon', {method:'POST', body: fd});
+    const j = await r.json();
+    if(j.success){
+      form.icon_url.value = j.icon;
+      uploadStatus.textContent = '✅ icona caricata';
+    }else{
+      uploadStatus.textContent = '❌ ' + (j.error || 'errore');
+    }
+  }catch(e){
+    uploadStatus.textContent = '❌ errore di rete';
+  }
+}
+
+async function submitForm(){
+  const payload = {
+    label: form.label.value.trim(),
+    url: form.url.value.trim(),
+    icon: form.icon_url.value.trim()
+  };
+  if(!payload.label || !payload.url){ alert('Compila etichetta e URL'); return; }
+  let endpoint = '/add';
+  if(editing){ endpoint='/edit'; payload.original_url = original_url; }
+  const r = await fetch(endpoint, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const j = await r.json();
+  if(!j.success){ alert(j.error||'Errore'); return; }
+  location.reload();
+}
+
+function resetForm(){ editing=false; original_url=null; form.reset(); uploadStatus.textContent=''; }
+
+async function refreshPorts(){
+  try{
+    const r = await fetch('/ports');
+    const j = await r.json();
+    const now = new Date().toLocaleTimeString();
+    if(j.ok){
+      const list = (j.ports||[]).map(p => p.proc ? `${p.port} (${p.proc} - PID ${p.pid})` : `${p.port}`).join('\n');
+      document.getElementById('ports').textContent = list || '—';
+      document.getElementById('portsMeta').textContent = 'aggiornato alle ' + now + ' • fonte: ' + (j.source||'n/a');
+    } else {
+      document.getElementById('ports').textContent = 'Errore: ' + (j.error||'sconosciuto');
+      document.getElementById('portsMeta').textContent = 'aggiornato alle ' + now;
+    }
+  } catch(e){
+    document.getElementById('ports').textContent = 'Errore caricamento porte';
+  }
+}
+</script>
+</body>
+</html>
