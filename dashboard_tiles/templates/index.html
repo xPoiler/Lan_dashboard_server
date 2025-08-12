@@ -124,6 +124,18 @@ async function submitForm(){
 
 function resetForm(){ editing=false; original_url=null; form.reset(); uploadStatus.textContent=''; }
 
+async function removeTile(url){
+  if(!confirm(`Sei sicuro di voler eliminare il tile con URL ${url}?`)) return;
+  const r = await fetch('/remove', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({url})
+  });
+  const j = await r.json();
+  if(!j.success){ alert(j.error||'Errore'); return; }
+  location.reload();
+}
+
 async function refreshPorts(){
   try{
     const r = await fetch('/ports');
